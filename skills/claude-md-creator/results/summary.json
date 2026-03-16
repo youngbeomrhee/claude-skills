@@ -1,0 +1,39 @@
+{
+  "last_iteration": 4,
+  "timestamp": "2026-03-15T15:30:00+09:00",
+  "results": {
+    "total": 8,
+    "passed": 8,
+    "failed": 0,
+    "pass_rate": 100
+  },
+  "failed_scenarios": [],
+  "prompt_changes": [
+    {
+      "file": "references/claim-taxonomy.md",
+      "change": "Added vague vs generic decision criteria section: named principle test → specificity test 2-step classification",
+      "iteration": 1
+    },
+    {
+      "file": "agents/native-evaluator.md",
+      "change": "Added parenthetical name separation rule to B-2 claim identification",
+      "iteration": 1
+    },
+    {
+      "file": "agents/native-evaluator.md",
+      "change": "Added explicit table of 6 allowed status values in B-3 with prohibition rule for non-standard values",
+      "iteration": 2
+    },
+    {
+      "file": "references/claim-taxonomy.md",
+      "change": "Restructured into 4-step decision criteria: specific value → named principle → general behavior → quality adjective. Added type-status consistency rules",
+      "iteration": 3
+    }
+  ],
+  "history": [
+    { "iteration": 1, "passed": 6, "total": 8 },
+    { "iteration": 2, "passed": 7, "total": 8 },
+    { "iteration": 3, "passed": 6, "total": 8 },
+    { "iteration": 4, "passed": 8, "total": 8 }
+  ]
+}

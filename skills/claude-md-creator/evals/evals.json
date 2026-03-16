@@ -1,0 +1,256 @@
+{
+  "$schema": "./evals-schema.json",
+  "version": "2.0",
+  "description": "Golden set for native evaluator validation. Each entry defines a CLAUDE.md scenario with expected evaluation outcomes.",
+  "eval_sets": [
+    {
+      "id": "minimal-valid",
+      "description": "Minimal valid CLAUDE.md — passes all quantitative checks with minimal content",
+      "claude_md": "# My Project\n\nBrief description.\n\n## Build & Run\n\n- `npm run dev` — start dev server\n- `npm run build` — production build\n\n## Test\n\n- `npm test` — run all tests\n\n## Code Style\n\n- Use 2-space indentation\n- Named exports only\n",
+      "project_fixtures": {
+        "package.json": {
+          "scripts": {
+            "dev": "next dev",
+            "build": "next build",
+            "test": "jest"
+          },
+          "dependencies": {
+            "next": "^14.0.0",
+            "react": "^18.0.0"
+          }
+        }
+      },
+      "expected": {
+        "quantitative": {
+          "over_200_lines": false,
+          "has_headers": true,
+          "has_bullets": true,
+          "has_commands": true,
+          "has_essential_sections": true,
+          "score_min": 100
+        },
+        "semantic": {
+          "claims": [
+            { "id": "cmd-1", "type": "command", "raw_text": "`npm run dev`", "expected_status": "verified" },
+            { "id": "cmd-2", "type": "command", "raw_text": "`npm run build`", "expected_status": "verified" },
+            { "id": "cmd-3", "type": "command", "raw_text": "`npm test`", "expected_status": "verified" },
+            { "id": "conv-1", "type": "convention", "raw_text": "Use 2-space indentation", "expected_status": ["verified", "unverifiable"] },
+            { "id": "conv-2", "type": "convention", "raw_text": "Named exports only", "expected_status": ["verified", "unverifiable"] }
+          ],
+          "coherence_score_min": 80,
+          "grade": ["A", "B"]
+        }
+      }
+    },
+    {
+      "id": "stale-paths",
+      "description": "CLAUDE.md with stale path references — evaluator must detect non-existent paths",
+      "claude_md": "# Stale Project\n\n## Architecture\n\n- API routes live in `src/api/routes/`\n- Components are in `src/components/`\n- Utils in `lib/utils/`\n\n## Build\n\n- `pnpm dev` — start dev server\n",
+      "project_fixtures": {
+        "package.json": {
+          "scripts": { "dev": "next dev" },
+          "dependencies": { "next": "^14.0.0" }
+        },
+        "directory_structure": [
+          "src/app/api/",
+          "src/components/",
+          "src/lib/utils/"
+        ]
+      },
+      "expected": {
+        "semantic": {
+          "claims": [
+            { "id": "path-1", "type": "path_reference", "raw_text": "`src/api/routes/`", "expected_status": "stale", "reason": "Directory does not exist, src/app/api/ exists instead" },
+            { "id": "path-2", "type": "path_reference", "raw_text": "`src/components/`", "expected_status": "verified" },
+            { "id": "path-3", "type": "path_reference", "raw_text": "`lib/utils/`", "expected_status": "stale", "reason": "Actual path is src/lib/utils/" },
+            { "id": "cmd-1", "type": "command", "raw_text": "`pnpm dev`", "expected_status": "verified" }
+          ],
+          "must_have_stale_count_min": 2
+        }
+      }
+    },
+    {
+      "id": "vague-generic",
+      "description": "CLAUDE.md full of vague and generic instructions — evaluator must flag them",
+      "claude_md": "# Vague Project\n\n## Guidelines\n\n- Write clean, maintainable code\n- Follow best practices\n- Keep functions small and focused\n- Follow DRY principle\n- Use meaningful variable names\n\n## Build\n\n- `npm start` — run the app\n\n## Architecture\n\n- Components in `src/components/`\n",
+      "project_fixtures": {
+        "package.json": {
+          "scripts": { "start": "node index.js" },
+          "dependencies": {}
+        },
+        "directory_structure": ["src/components/"]
+      },
+      "expected": {
+        "semantic": {
+          "claims": [
+            { "id": "vague-1", "type": "vague", "raw_text": "Write clean, maintainable code", "expected_status": "vague" },
+            { "id": "generic-1", "type": "generic", "raw_text": "Follow best practices", "expected_status": "generic" },
+            { "id": "vague-2", "type": "vague", "raw_text": "Keep functions small and focused", "expected_status": ["vague", "generic"] },
+            { "id": "generic-2", "type": "generic", "raw_text": "Follow DRY principle", "expected_status": "generic" },
+            { "id": "generic-3", "type": "generic", "raw_text": "Use meaningful variable names", "expected_status": "generic" },
+            { "id": "cmd-1", "type": "command", "raw_text": "`npm start`", "expected_status": "verified" },
+            { "id": "path-1", "type": "path_reference", "raw_text": "`src/components/`", "expected_status": "verified" }
+          ],
+          "must_have_vague_count_min": 1,
+          "must_have_generic_count_min": 2,
+          "coherence_score_max": 60,
+          "grade": ["D", "F"]
+        }
+      }
+    },
+    {
+      "id": "code-block-context",
+      "description": "CLAUDE.md with code blocks — claims inside code fences must NOT be extracted as claims",
+      "claude_md": "# Code Block Project\n\n## API Conventions\n\n- All API routes use `zod` for validation\n- Response format:\n\n```typescript\n// Example response structure\ninterface ApiResponse<T> {\n  data: T;\n  error?: string;\n}\n```\n\n- Use `pnpm lint` to check code style\n\n## Build\n\n- `pnpm dev` — dev server\n",
+      "project_fixtures": {
+        "package.json": {
+          "scripts": { "dev": "next dev", "lint": "eslint ." },
+          "dependencies": { "zod": "^3.22.0" }
+        }
+      },
+      "expected": {
+        "semantic": {
+          "claims": [
+            { "id": "fw-1", "type": "framework_reference", "raw_text": "`zod`", "expected_status": "verified" },
+            { "id": "cmd-1", "type": "command", "raw_text": "`pnpm lint`", "expected_status": "verified" },
+            { "id": "cmd-2", "type": "command", "raw_text": "`pnpm dev`", "expected_status": "verified" }
+          ],
+          "must_not_extract": [
+            "interface ApiResponse",
+            "data: T",
+            "error?: string"
+          ],
+          "notes": "Content inside code fences (``` ```) is illustration, not claims"
+        }
+      }
+    },
+    {
+      "id": "conflict-detection",
+      "description": "CLAUDE.md with contradictory instructions — evaluator must detect conflicts",
+      "claude_md": "# Conflicting Project\n\n## Code Style\n\n- Use default exports for all components\n- Always use named exports\n- Use semicolons at the end of statements\n- Do not use semicolons (rely on ASI)\n\n## Build\n\n- `npm run build` — build\n",
+      "project_fixtures": {
+        "package.json": {
+          "scripts": { "build": "tsc" },
+          "dependencies": { "typescript": "^5.0.0" }
+        }
+      },
+      "expected": {
+        "semantic": {
+          "conflicts_min": 2,
+          "conflict_pairs": [
+            { "a": "Use default exports for all components", "b": "Always use named exports" },
+            { "a": "Use semicolons at the end of statements", "b": "Do not use semicolons" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "over-200-lines",
+      "description": "CLAUDE.md that exceeds 200 lines — quantitative check must warn",
+      "claude_md_line_count": 250,
+      "claude_md_note": "Generate a 250-line CLAUDE.md with repetitive sections to test the size warning",
+      "expected": {
+        "quantitative": {
+          "over_200_lines": true,
+          "score_max": 83
+        }
+      }
+    },
+    {
+      "id": "comparison-context",
+      "description": "CLAUDE.md using comparison phrases — 'like React' should NOT be a framework claim",
+      "claude_md": "# Comparison Project\n\nThis project uses a component model similar to React but is built on Svelte.\n\n## Stack\n\n- Framework: Svelte (SvelteKit)\n- Styling: like Tailwind but we use UnoCSS\n\n## Build\n\n- `pnpm dev` — dev server\n",
+      "project_fixtures": {
+        "package.json": {
+          "dependencies": {
+            "svelte": "^4.0.0",
+            "@sveltejs/kit": "^2.0.0",
+            "unocss": "^0.58.0"
+          }
+        }
+      },
+      "expected": {
+        "semantic": {
+          "claims": [
+            { "id": "fw-1", "type": "framework_reference", "raw_text": "Svelte", "expected_status": "verified" },
+            { "id": "fw-2", "type": "framework_reference", "raw_text": "SvelteKit", "expected_status": "verified" },
+            { "id": "fw-3", "type": "framework_reference", "raw_text": "UnoCSS", "expected_status": "verified" }
+          ],
+          "must_not_extract_as_framework": [
+            "React",
+            "Tailwind"
+          ],
+          "notes": "Comparison phrases ('similar to X', 'like X') should not become framework claims"
+        }
+      }
+    },
+    {
+      "id": "builtin-commands",
+      "description": "CLAUDE.md mentioning built-in commands — npm install, git add should NOT be command claims",
+      "claude_md": "# Builtin Commands Project\n\n## Setup\n\n- Run `npm install` to install dependencies\n- Use `git add .` before committing\n- Run `npm run test:coverage` for coverage report\n- Use `npm run lint:fix` to auto-fix lint issues\n\n## Build\n\n- `npm run build` — build the project\n",
+      "project_fixtures": {
+        "package.json": {
+          "scripts": {
+            "build": "tsc",
+            "test:coverage": "jest --coverage",
+            "lint:fix": "eslint --fix ."
+          }
+        }
+      },
+      "expected": {
+        "semantic": {
+          "claims": [
+            { "id": "cmd-1", "type": "command", "raw_text": "`npm run test:coverage`", "expected_status": "verified" },
+            { "id": "cmd-2", "type": "command", "raw_text": "`npm run lint:fix`", "expected_status": "verified" },
+            { "id": "cmd-3", "type": "command", "raw_text": "`npm run build`", "expected_status": "verified" }
+          ],
+          "must_not_extract_as_command": [
+            "npm install",
+            "git add"
+          ],
+          "notes": "Package manager builtins (npm install, pip install) and git builtins (git add, git commit) are not command claims"
+        }
+      }
+    }
+  ],
+  "github_eval_sets": [
+    {
+      "id": "github-anthropic-claude-code",
+      "description": "Anthropic's Claude Code — likely has a well-maintained CLAUDE.md as a reference example",
+      "github_url": "https://github.com/anthropics/claude-code",
+      "eval_mode": "quick",
+      "expected": {
+        "has_claude_md": true,
+        "notes": "Reference implementation. Expect high score (A-B grade). Use as baseline for quality comparison."
+      }
+    },
+    {
+      "id": "github-vercel-next",
+      "description": "Vercel Next.js — large monorepo, may or may not have CLAUDE.md",
+      "github_url": "https://github.com/vercel/next.js",
+      "eval_mode": "quick",
+      "expected": {
+        "notes": "Large monorepo test. Verifies monorepo CLAUDE.md discovery and evaluation at scale."
+      }
+    },
+    {
+      "id": "github-denoland-deno",
+      "description": "Deno — Rust project, tests non-JS ecosystem CLAUDE.md evaluation",
+      "github_url": "https://github.com/denoland/deno",
+      "eval_mode": "quick",
+      "expected": {
+        "notes": "Rust/Cargo ecosystem. Tests claim verification against Cargo.toml instead of package.json."
+      }
+    },
+    {
+      "id": "github-no-claude-md",
+      "description": "Repository without CLAUDE.md — evaluator must gracefully report absence",
+      "github_url": "https://github.com/torvalds/linux",
+      "eval_mode": "quantitative_only",
+      "expected": {
+        "has_claude_md": false,
+        "notes": "Must report 'No CLAUDE.md found' without error. Tests graceful handling."
+      }
+    }
+  ]
+}

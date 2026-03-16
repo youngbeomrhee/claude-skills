@@ -50,6 +50,17 @@
       "skills": [
         "./skills/claude-api"
       ]
+    },
+    {
+      "name": "claude-md-creator",
+      "description": "Create, evaluate, and improve CLAUDE.md files. Claude-native evaluation using Read/Glob/Grep — no external scripts required.",
+      "source": "./skills/claude-md-creator",
+      "strict": false,
+      "skills": [
+        "./skills/claude-md-creator/skills/claude-md-creator",
+        "./skills/claude-md-creator/skills/auto-refine",
+        "./skills/claude-md-creator/skills/auto-refine-status"
+      ]
     }
   ]
 }
